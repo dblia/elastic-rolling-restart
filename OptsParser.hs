@@ -2,7 +2,7 @@
   Options Parser module.
 -}
 
-module Opts
+module OptsParser
   ( Opts(..)
   , optParser
   , parseOpts

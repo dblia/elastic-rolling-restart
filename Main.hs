@@ -5,7 +5,7 @@
 module Main where
 
 import Client as Cli
-import Opts (parseOpts, argParser)
+import OptsParser (parseOpts, argParser)
 
 import Network.Curl
 
