@@ -18,6 +18,12 @@ module Constants
   , esCatHealth                   -- :: String
   , esClusterSettings             -- :: String
   , esNodeShutdown                -- :: String
+
+  , sshParams                     -- :: [String]
+
+  , cmdSSH                        -- :: String
+  , cmdSystemctl                  -- :: String
+  , cmdSudo                       -- :: String
   ) where
 
 import Network.Curl (Long, CurlOption(..))
@@ -73,3 +79,25 @@ esClusterSettings = "/_cluster/settings"
 -- | Elasticsearch API node-shutdow endpoint.
 esNodeShutdown :: String
 esNodeShutdown = "/_cluster/nodes/_local/_shutdown"
+
+-- | Parameters for SSH remote command execution.
+sshParams :: [String]
+sshParams =
+  [ "-q"
+  , "-t"
+  , "-oBatchMode=yes"
+  , "-oConnectTimeout=5"
+  , "-oStrictHostKeyChecking=no"
+  ]
+
+-- | ssh command executable.
+cmdSSH :: String
+cmdSSH = "/usr/bin/ssh"
+
+-- | systemctl command executable.
+cmdSystemctl :: String
+cmdSystemctl = "/bin/systemctl"
+
+-- | sudo command executable.
+cmdSudo :: String
+cmdSudo = "/usr/bin/sudo"

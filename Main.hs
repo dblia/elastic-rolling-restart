@@ -6,8 +6,9 @@ module Main where
 
 import Client        as Cli
 import Constants     as C
-import OptsParser       (parseOpts, argParser)
 import JData            (shardAllocSettings)
+import OptsParser       (parseOpts, argParser)
+import Process
 import Utils            (curlPutString)
 
 import Network.Curl
@@ -42,6 +43,11 @@ main = withCurlDo $ do
   -- | Wait for node to stop.
   putStrLn $ printf ">>> Waiting for node '%s' to stop" node
   Cli.waitForNodeStop node
+  putStr "\n"
+
+  -- | Restart the node.
+  putStrLn $ printf ">>> Restarting node '%s'" node
+  Process.runCmd "sudo systemctl start esctl@1.service" Nothing
   putStr "\n"
 
   -- | Wait for node to respond after restart.
