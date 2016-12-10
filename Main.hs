@@ -4,8 +4,11 @@
 
 module Main where
 
-import Client as Cli
-import OptsParser (parseOpts, argParser)
+import Client    as Cli
+import Constants as C
+import OptsParser   (parseOpts, argParser)
+import Json         (shardAllocSettings)
+import Utils        (curlPutString)
 
 import Network.Curl
 
@@ -16,8 +19,12 @@ main = withCurlDo $ do
   putStrLn $ "Master: " ++ master
   putStr "Nodes: "
   mapM_ (\str -> putStr $ " " ++ str) nodes
-  putStrLn ""
-  putStrLn ""
+  putStrLn "\n"
   -- Verify green cluster status
+  putStrLn ">>> Verifying green cluster status"
   body <- Cli.waitForStatus master ["green"]
-  putStr body
+  putStrLn body
+
+  putStrLn ">>> Disabling routing shard allocation"
+  out <- Cli.shardAllocToggle C.shardAllocDisable master
+  putStrLn out

@@ -5,6 +5,8 @@
 module Client where
 
 import Constants       as C
+import Json               (shardAllocSettings)
+import Utils              (curlPutString)
 
 import Control.Concurrent (threadDelay)
 import Data.List          (isInfixOf)
@@ -30,3 +32,21 @@ waitForStatus hostname status_list =
               threadDelay period
               wait' (cnt-1) period url st_list
         otherwise -> fail $ printf "Curl error for '%s': %s" url (show code)
+
+
+shardAllocToggle :: String -> String -> IO String
+shardAllocToggle action hostname = do
+  let es_url = hostname ++ C.esClusterSettings
+  (rcode, resp) <- curlPutString es_url req_body C.curlContentTypeJson
+  case rcode of
+    CurlOK    ->
+      case isInfixOf "\"acknowledged\":true" resp of
+        True  -> return "Done"
+        False -> fail $ printf "Failed acknowledge of allocation '%s'\
+                              \ for '%s'" action hostname
+    otherwise -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
+  where req_body :: [String]
+        req_body = case action of
+          "enable"  -> [shardAllocSettings "all"]
+          "disable" -> [shardAllocSettings "none"]
+          otherwise -> error $ printf "Wrong action given: '%s'" action

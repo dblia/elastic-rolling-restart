@@ -30,6 +30,22 @@ curlOpts =
   , CurlConnectTimeout connTimeout
   ]
 
+curlPostDefaultContentType :: String
+curlPostDefaultContentType = "application/x-www-form-urlencoded"
+
+curlContentTypeJson :: Maybe String
+curlContentTypeJson = Just "application/json"
+
+shardAllocEnable :: String
+shardAllocEnable = "enable"
+
+shardAllocDisable :: String
+shardAllocDisable = "disable"
+
 -- | Elasticsearch cat-health endpoint
 esCatHealth :: String
 esCatHealth = "/_cat/health"
+
+-- | Elasticsearch cluster settings endpoint
+esClusterSettings :: String
+esClusterSettings = "/_cluster/settings"
