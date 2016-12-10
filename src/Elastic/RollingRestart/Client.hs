@@ -2,7 +2,7 @@
 
 -}
 
-module Client
+module Elastic.RollingRestart.Client
   ( waitForStatus         -- :: String -> [String] -> IO String
   , shardAllocToggle      -- :: String -> String -> IO String
   , nodeShutdown          -- :: String -> IO String
@@ -10,9 +10,10 @@ module Client
   , waitForNodeJoin       -- :: String -> IO ()
   ) where
 
-import Constants       as C
-import JData              (shardAllocSettings)
-import Utils              (curlPutString, curlPostString)
+import Elastic.RollingRestart.Constants as C
+
+import Elastic.RollingRestart.Utils.JData (shardAllocSettings)
+import Elastic.RollingRestart.Utils.Curl  (curlPutString, curlPostString)
 
 import Control.Concurrent (threadDelay)
 import Data.List          (isInfixOf)

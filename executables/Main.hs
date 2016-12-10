@@ -4,12 +4,13 @@
 
 module Main where
 
-import Client        as Cli
-import Constants     as C
-import JData            (shardAllocSettings)
-import OptsParser       (parseOpts, argParser)
-import Process
-import Utils            (curlPutString)
+import Elastic.RollingRestart.Client     as Cli
+import Elastic.RollingRestart.Constants  as C
+import Elastic.RollingRestart.OptsParser    (parseOpts, argParser)
+
+import Elastic.RollingRestart.Utils.Curl    (curlPutString)
+import Elastic.RollingRestart.Utils.JData   (shardAllocSettings)
+import Elastic.RollingRestart.Utils.Process
 
 import Data.List.Split  (splitOn)
 import Network.Curl
@@ -45,7 +46,7 @@ restart master node service = do
   putStrLn $ printf ">>> Restarting node '%s'" node
   let [hostname, _] = splitOn ":" node
   let cmd = unwords [C.cmdSudo, C.cmdSystemctl, "start", service]
-  Process.runCmd cmd (Just hostname)
+  runCmd cmd (Just hostname)
   putStr "\n"
 
   -- | Wait for node to respond after restart.

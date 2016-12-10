@@ -2,14 +2,14 @@
 
 -}
 
-module Utils
+module Elastic.RollingRestart.Utils.Curl
   ( curlPutString        -- :: URLString
                          -- -> [String] -> Maybe String -> IO (CurlCode, String)
   , curlPostString       -- :: URLString
                          -- -> [String] -> Maybe String -> IO (CurlCode, String)
   ) where
 
-import Constants       as C
+import Elastic.RollingRestart.Constants as C
 
 import Data.Maybe         (fromMaybe)
 import Data.IORef         (newIORef, readIORef)

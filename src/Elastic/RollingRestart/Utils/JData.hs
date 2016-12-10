@@ -5,7 +5,7 @@
 
 -}
 
-module JData
+module Elastic.RollingRestart.Utils.JData
   ( shardAllocSettings        -- :: String -> String
   ) where
 

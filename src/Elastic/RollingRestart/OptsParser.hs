@@ -2,7 +2,7 @@
 
 -}
 
-module OptsParser
+module Elastic.RollingRestart.OptsParser
   ( Opts(..)        -- :: Opts
   , optParser       -- :: Parser Opts
   , parseOpts       -- :: IO Opts

@@ -2,7 +2,7 @@
 
 -}
 
-module Constants
+module Elastic.RollingRestart.Constants
   ( pollWaitInterval              -- :: Int
   , pollWaitCount                 -- :: Int
 

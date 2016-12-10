@@ -2,9 +2,11 @@
 
 -}
 
-module Process
+module Elastic.RollingRestart.Utils.Process
   ( runCmd                  -- :: String -> Maybe String -> IO String
   ) where
+
+import Elastic.RollingRestart.Constants as C
 
 import qualified Control.Exception as E
 
@@ -12,8 +14,6 @@ import Data.List.Split (splitOn)
 import System.Exit
 import System.Process  (readProcessWithExitCode)
 import Text.Printf     (printf)
-
-import Constants        as C
 
 
 -- | Exit the program in case of an error, or return the result value.
@@ -40,6 +40,7 @@ runCmd :: String          -- ^ Command to be executed
        -> IO String       -- ^ Output of the command
 runCmd command target = do
   let (cmd, params) = prepareCommand command target
+  putStrLn $ printf "Runnning cmd: %s %s " cmd (unwords params)
   (E.try $ readProcessWithExitCode cmd params stdin ::
     IO (Either IOError (ExitCode, String, String))) >>= either ioError exitIfErr
   where stdin :: String
