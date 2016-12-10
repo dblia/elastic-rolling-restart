@@ -30,4 +30,10 @@ main = withCurlDo $ do
   -- | Disable routing shard allocation.
   putStrLn ">>> Disabling routing shard allocation"
   out <- Cli.shardAllocToggle C.shardAllocDisable master
-  putStrLn out
+  putStrLn $ out ++ "\n"
+
+  -- | Request node shutdown for node
+  let node = head nodes
+  putStrLn $ ">>> Requesting node shutdown for " ++ node
+  out <- Cli.nodeShutdown node
+  putStrLn $ out ++ "\n"

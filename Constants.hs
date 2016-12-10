@@ -17,6 +17,7 @@ module Constants
 
   , esCatHealth                   -- :: String
   , esClusterSettings             -- :: String
+  , esNodeShutdown                -- :: String
   ) where
 
 import Network.Curl (Long, CurlOption(..))
@@ -68,3 +69,7 @@ esCatHealth = "/_cat/health"
 -- | Elasticsearch API cluster-settings endpoint.
 esClusterSettings :: String
 esClusterSettings = "/_cluster/settings"
+
+-- | Elasticsearch API node-shutdow endpoint.
+esNodeShutdown :: String
+esNodeShutdown = "/_cluster/nodes/_local/_shutdown"

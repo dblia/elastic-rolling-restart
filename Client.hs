@@ -5,11 +5,12 @@
 module Client
   ( waitForStatus         -- :: String -> [String] -> IO String
   , shardAllocToggle      -- :: String -> String -> IO String
+  , nodeShutdown          -- :: String -> IO String
   ) where
 
 import Constants       as C
 import JData              (shardAllocSettings)
-import Utils              (curlPutString)
+import Utils              (curlPutString, curlPostString)
 
 import Control.Concurrent (threadDelay)
 import Data.List          (isInfixOf)
@@ -52,3 +53,12 @@ shardAllocToggle action host = do
           "enable"  -> [shardAllocSettings "all"]
           "disable" -> [shardAllocSettings "none"]
           otherwise -> error $ printf "Unknown action argument: %s" action
+
+-- | Request a node shutdown.
+nodeShutdown :: String -> IO String
+nodeShutdown host = do
+  let es_url = host ++ C.esNodeShutdown
+  (rcode, resp) <- curlPostString es_url [] Nothing
+  case rcode of
+    CurlOK    -> return resp
+    otherwise -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
