@@ -11,6 +11,7 @@ import JData            (shardAllocSettings)
 import Utils            (curlPutString)
 
 import Network.Curl
+import Text.Printf      (printf)
 
 
 main :: IO ()
@@ -32,8 +33,18 @@ main = withCurlDo $ do
   out <- Cli.shardAllocToggle C.shardAllocDisable master
   putStrLn $ out ++ "\n"
 
-  -- | Request node shutdown for node
+  -- | Request node shutdown for node.
   let node = head nodes
   putStrLn $ ">>> Requesting node shutdown for " ++ node
   out <- Cli.nodeShutdown node
   putStrLn $ out ++ "\n"
+
+  -- | Wait for node to stop.
+  putStrLn $ printf ">>> Waiting for node '%s' to stop" node
+  Cli.waitForNodeStop node
+  putStr "\n"
+
+  -- | Wait for node to respond after restart.
+  putStrLn $ printf ">>> Waiting for node '%s' to re-join the cluster" node
+  Cli.waitForNodeJoin node
+  putStr "\n"

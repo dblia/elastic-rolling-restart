@@ -6,6 +6,8 @@ module Client
   ( waitForStatus         -- :: String -> [String] -> IO String
   , shardAllocToggle      -- :: String -> String -> IO String
   , nodeShutdown          -- :: String -> IO String
+  , waitForNodeStop       -- :: String -> IO ()
+  , waitForNodeJoin       -- :: String -> IO ()
   ) where
 
 import Constants       as C
@@ -62,3 +64,33 @@ nodeShutdown host = do
   case rcode of
     CurlOK    -> return resp
     otherwise -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
+
+-- | Wait from a node stop responding.
+waitForNodeStop :: URLString -> IO ()
+waitForNodeStop = wait' C.pollWaitCount C.pollWaitInterval
+  where
+    wait' :: Int -> Int -> URLString -> IO ()
+    wait' 0 _ host = fail $ "Sorry mate, no more retries left: " ++ host
+    wait' cnt period host = do
+      threadDelay period
+      (rcode, resp) <- curlGetString host C.curlOpts
+      case rcode of
+        CurlOK    -> do
+          threadDelay period
+          wait' (cnt-1) period host
+        otherwise -> return ()
+
+-- | Wait from a node start responding.
+waitForNodeJoin :: URLString -> IO ()
+waitForNodeJoin = wait' C.pollWaitCount C.pollWaitInterval
+  where
+    wait' :: Int -> Int -> URLString -> IO ()
+    wait' 0 _ host = fail $ "Sorry mate, no more retries left: " ++ host
+    wait' cnt period host = do
+      threadDelay period
+      (rcode, resp) <- curlGetString host C.curlOpts
+      case rcode of
+        CurlOK    -> return ()
+        otherwise -> do
+          threadDelay period
+          wait' (cnt-1) period host
