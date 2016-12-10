@@ -1,11 +1,14 @@
-{-
-  Elasticsearch client module.
+{-| Module implementing the Elasticsearch related logic.
+
 -}
 
-module Client where
+module Client
+  ( waitForStatus         -- :: String -> [String] -> IO String
+  , shardAllocToggle      -- :: String -> String -> IO String
+  ) where
 
 import Constants       as C
-import Json               (shardAllocSettings)
+import JData              (shardAllocSettings)
 import Utils              (curlPutString)
 
 import Control.Concurrent (threadDelay)
@@ -14,10 +17,10 @@ import Network.Curl
 import Text.Printf        (printf)
 
 
--- | wait for the desired cluster health status
+-- | Wait for the desired cluster health status.
 waitForStatus :: String -> [String] -> IO String
-waitForStatus hostname status_list =
-  let es_url = hostname ++ C.esCatHealth
+waitForStatus host status_list =
+  let es_url = host ++ C.esCatHealth
   in wait' C.pollWaitCount C.pollWaitInterval es_url status_list
   where
     wait' :: Int -> Int -> URLString -> [String] -> IO String
@@ -26,27 +29,26 @@ waitForStatus hostname status_list =
       (code, body) <- curlGetString url C.curlOpts
       case code of
         CurlOK    ->
-          case or $ map (\status -> isInfixOf status body) st_list of
-            True  -> return body
-            False -> do
-              threadDelay period
-              wait' (cnt-1) period url st_list
+          if any (`isInfixOf` body) st_list
+          then return body
+          else do
+            threadDelay period
+            wait' (cnt-1) period url st_list
         otherwise -> fail $ printf "Curl error for '%s': %s" url (show code)
 
-
+-- | Toggle between shard allocation transient settings.
 shardAllocToggle :: String -> String -> IO String
-shardAllocToggle action hostname = do
-  let es_url = hostname ++ C.esClusterSettings
+shardAllocToggle action host = do
+  let es_url = host ++ C.esClusterSettings
   (rcode, resp) <- curlPutString es_url req_body C.curlContentTypeJson
   case rcode of
     CurlOK    ->
-      case isInfixOf "\"acknowledged\":true" resp of
-        True  -> return "Done"
-        False -> fail $ printf "Failed acknowledge of allocation '%s'\
-                              \ for '%s'" action hostname
+      if "\"acknowledged\":true" `isInfixOf` resp
+      then return "Done"
+      else fail $ printf "Failed allocation %s acknowledge for %s" action host
     otherwise -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
   where req_body :: [String]
         req_body = case action of
           "enable"  -> [shardAllocSettings "all"]
           "disable" -> [shardAllocSettings "none"]
-          otherwise -> error $ printf "Wrong action given: '%s'" action
+          otherwise -> error $ printf "Unknown action argument: %s" action

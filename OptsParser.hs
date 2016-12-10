@@ -1,12 +1,12 @@
-{-
-  Options Parser module.
+{-| Command-line options parser module.
+
 -}
 
 module OptsParser
-  ( Opts(..)
-  , optParser
-  , parseOpts
-  , argParser
+  ( Opts(..)        -- :: Opts
+  , optParser       -- :: Parser Opts
+  , parseOpts       -- :: IO Opts
+  , argParser       -- :: Opts -> IO (String, [String])
   ) where
 
 import Data.List.Split     (splitOn)
@@ -39,13 +39,13 @@ optParser = helper <*> _parser
            <> help "The cluster node hostnames to restart; nodes should be\
                    \ concatenated with commas: host1:port[,host2:port].")
 
-
+-- | Parse command-line argument by displaying custom description.
 parseOpts :: IO Opts
 parseOpts = execParser $ info optParser $
      fullDesc
   <> progDesc "ElasticSearch cluster rolling restart tool."
 
-
+-- | Parse command-line argument and return them properly.
 argParser :: Opts -> IO (String, [String])
 argParser opts =
   case opts of

@@ -1,51 +1,70 @@
-{-
-  Module constants.
+{-| Module defining the tool's constants.
+
 -}
 
-module Constants where
+module Constants
+  ( pollWaitInterval              -- :: Int
+  , pollWaitCount                 -- :: Int
+
+  , curlQueryTimeout              -- :: Long
+  , connectTimeout                -- :: Long
+  , curlOpts                      -- :: [CurlOption]
+  , curlPostDefaultContentType    -- :: String
+  , curlContentTypeJson           -- :: Maybe String
+
+  , shardAllocEnable              -- :: String
+  , shardAllocDisable             -- :: String
+
+  , esCatHealth                   -- :: String
+  , esClusterSettings             -- :: String
+  ) where
 
 import Network.Curl (Long, CurlOption(..))
 
 
--- | set the poll wait interval to 3 seconds
+-- | Poll wait interval (3 seconds).
 pollWaitInterval :: Int
 pollWaitInterval = 3 * 10 ^ 6
 
--- | pollWaitCount times before giving up
+-- | How many times to poll before giving up.
 pollWaitCount :: Int
 pollWaitCount = 20
 
--- | curl query timeout
-queryTimeout :: Long
-queryTimeout = 60
+-- | Curl query timeout.
+curlQueryTimeout :: Long
+curlQueryTimeout = 60
 
--- | curl connection timeout
-connTimeout :: Long
-connTimeout = 15
+-- | Curl connection timeout.
+connectTimeout :: Long
+connectTimeout = 15
 
--- | define curl options
+-- | Custom curl options.
 curlOpts :: [CurlOption]
 curlOpts =
-  [ CurlTimeout queryTimeout
-  , CurlConnectTimeout connTimeout
+  [ CurlTimeout curlQueryTimeout
+  , CurlConnectTimeout connectTimeout
   ]
 
+-- | Default Content-Type for PUT/POST requests.
 curlPostDefaultContentType :: String
 curlPostDefaultContentType = "application/x-www-form-urlencoded"
 
+-- | Content-Type for JSON data.
 curlContentTypeJson :: Maybe String
 curlContentTypeJson = Just "application/json"
 
+-- | Shard allocation enable string.
 shardAllocEnable :: String
 shardAllocEnable = "enable"
 
+-- | Shard allocation disable string.
 shardAllocDisable :: String
 shardAllocDisable = "disable"
 
--- | Elasticsearch cat-health endpoint
+-- | Elasticsearch API cat-health endpoint.
 esCatHealth :: String
 esCatHealth = "/_cat/health"
 
--- | Elasticsearch cluster settings endpoint
+-- | Elasticsearch API cluster-settings endpoint.
 esClusterSettings :: String
 esClusterSettings = "/_cluster/settings"

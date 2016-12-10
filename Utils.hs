@@ -1,22 +1,24 @@
-{-
-  Elasticsearch utility module.
+{-| Module containing various utility functions.
+
 -}
 
-module Utils where
+module Utils
+  ( curlPutString        -- :: URLString
+                         -- -> [String] -> Maybe String -> IO (CurlCode, String)
+  ) where
 
 import Constants       as C
 
+import Data.Maybe         (fromMaybe)
 import Data.IORef         (newIORef, readIORef)
 import Network.Curl
 
 
--- | Performs a PUT request, and returns the response as a String.
+-- | Performs a PUT request, and returns the response code and body.
 curlPutString :: URLString -> [String] -> Maybe String -> IO (CurlCode, String)
 curlPutString url pfs ctype =
-  let content_type = case ctype of
-       Just typ -> typ
-       Nothing  -> C.curlPostDefaultContentType
-  in initialize >>= \h -> do
+  let content_type = fromMaybe C.curlPostDefaultContentType ctype
+  in initialize >>= \ h -> do
     ref <- newIORef []
     setopt h (CurlCookieJar "cookies")
     setopt h (CurlFailOnError True)
