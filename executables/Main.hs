@@ -7,9 +7,6 @@ module Main where
 import Elastic.RollingRestart.Client     as Cli
 import Elastic.RollingRestart.Constants  as C
 import Elastic.RollingRestart.OptsParser    (parseOpts, argParser)
-
-import Elastic.RollingRestart.Utils.Curl    (curlPutString)
-import Elastic.RollingRestart.Utils.JData   (shardAllocSettings)
 import Elastic.RollingRestart.Utils.Process
 
 import Data.List.Split  (splitOn)
@@ -29,13 +26,12 @@ restart master node service = do
 
   -- | Disable routing shard allocation.
   putStrLn ">>> Disabling routing shard allocation"
-  out <- Cli.shardAllocToggle C.shardAllocDisable master
-  putStrLn $ out ++ "\n"
+  _out <- Cli.shardAllocToggle C.shardAllocDisable master
+  putStrLn $ _out ++ "\n"
 
   -- | Request node shutdown for node.
   putStrLn $ ">>> Requesting node shutdown for " ++ node
-  out <- Cli.nodeShutdown node
-  putStrLn $ out ++ "\n"
+  Cli.nodeShutdown node >>= (\out -> putStrLn $ out ++ "\n")
 
   -- | Wait for node to stop.
   putStrLn $ printf ">>> Waiting for node '%s' to stop" node
@@ -46,8 +42,7 @@ restart master node service = do
   putStrLn $ printf ">>> Restarting node '%s'" node
   let [hostname, _] = splitOn ":" node
   let cmd = unwords [C.cmdSudo, C.cmdSystemctl, "start", service]
-  runCmd cmd (Just hostname)
-  putStr "\n"
+  runCmd cmd (Just hostname) >>= putStrLn
 
   -- | Wait for node to respond after restart.
   putStrLn $ printf ">>> Waiting for node '%s' to re-join the cluster" node
@@ -56,18 +51,16 @@ restart master node service = do
 
   -- | Verify at least yellow cluster status.
   putStrLn ">>> Verifying at least yellow cluster status"
-  body <- Cli.waitForStatus master ["yellow", "green"]
-  putStrLn body
+  Cli.waitForStatus master ["yellow", "green"] >>= putStrLn
 
   -- | Re-enabling routing shard allocation.
   putStrLn ">>> Re-enabling routing shard allocation"
-  out <- Cli.shardAllocToggle C.shardAllocEnable master
-  putStrLn $ out ++ "\n"
+  _out <- Cli.shardAllocToggle C.shardAllocEnable master
+  putStrLn $ _out ++ "\n"
 
   -- | Verify green cluster status.
   putStrLn ">>> Verifying green cluster status"
-  body <- Cli.waitForStatus master ["green"]
-  putStrLn body
+  Cli.waitForStatus master ["green"] >>= putStrLn
 
   putStrLn $ printf ">>>>>> Node '%s' restarted successfully!\n" node
 
@@ -86,6 +79,6 @@ main = withCurlDo $ do
 
   -- | Finally, restart the master node.
   let node = master
-  let master = head nodes
-  putStrLn $ printf "New master is '%s', last node '%s'" master node
-  restart master node service
+  let new_master = head nodes
+  putStrLn $ printf "New master is '%s', last node '%s'" new_master node
+  restart new_master node service

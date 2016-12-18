@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-unused-binds #-}
 
 {-| JSON data definitions and utility functions.
 
@@ -9,7 +10,7 @@ module Elastic.RollingRestart.Utils.JData
   ( shardAllocSettings        -- :: String -> String
   ) where
 
-import Data.Aeson   ((.=), FromJSON(..), ToJSON(..), Value(..), object, encode)
+import Data.Aeson   ((.=), FromJSON(..), ToJSON(..), object, encode)
 import GHC.Generics
 
 import qualified Data.ByteString.Lazy.Char8 as BS8

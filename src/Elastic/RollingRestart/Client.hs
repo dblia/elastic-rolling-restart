@@ -32,13 +32,13 @@ waitForStatus host status_list =
     wait' cnt period url st_list = do
       (code, body) <- curlGetString url C.curlOpts
       case code of
-        CurlOK    ->
+        CurlOK ->
           if any (`isInfixOf` body) st_list
           then return body
           else do
             threadDelay period
             wait' (cnt-1) period url st_list
-        otherwise -> fail $ printf "Curl error for '%s': %s" url (show code)
+        _      -> fail $ printf "Curl error for '%s': %s" url (show code)
 
 -- | Toggle between shard allocation transient settings.
 shardAllocToggle :: String -> String -> IO String
@@ -46,16 +46,16 @@ shardAllocToggle action host = do
   let es_url = host ++ C.esClusterSettings
   (rcode, resp) <- curlPutString es_url req_body C.curlContentTypeJson
   case rcode of
-    CurlOK    ->
+    CurlOK ->
       if "\"acknowledged\":true" `isInfixOf` resp
       then return "Done"
       else fail $ printf "Failed allocation %s acknowledge for %s" action host
-    otherwise -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
+    _      -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
   where req_body :: [String]
         req_body = case action of
           "enable"  -> [shardAllocSettings "all"]
           "disable" -> [shardAllocSettings "none"]
-          otherwise -> error $ printf "Unknown action argument: %s" action
+          _         -> error $ printf "Unknown action argument: %s" action
 
 -- | Request a node shutdown.
 nodeShutdown :: String -> IO String
@@ -63,8 +63,8 @@ nodeShutdown host = do
   let es_url = host ++ C.esNodeShutdown
   (rcode, resp) <- curlPostString es_url [] Nothing
   case rcode of
-    CurlOK    -> return resp
-    otherwise -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
+    CurlOK -> return resp
+    _      -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
 
 -- | Wait from a node stop responding.
 waitForNodeStop :: URLString -> IO ()
@@ -74,12 +74,12 @@ waitForNodeStop = wait' C.pollWaitCount C.pollWaitInterval
     wait' 0 _ host = fail $ "Sorry mate, no more retries left: " ++ host
     wait' cnt period host = do
       threadDelay period
-      (rcode, resp) <- curlGetString host C.curlOpts
+      (rcode, _resp) <- curlGetString host C.curlOpts
       case rcode of
-        CurlOK    -> do
+        CurlOK -> do
           threadDelay period
           wait' (cnt-1) period host
-        otherwise -> return ()
+        _      -> return ()
 
 -- | Wait from a node start responding.
 waitForNodeJoin :: URLString -> IO ()
@@ -89,9 +89,9 @@ waitForNodeJoin = wait' C.pollWaitCount C.pollWaitInterval
     wait' 0 _ host = fail $ "Sorry mate, no more retries left: " ++ host
     wait' cnt period host = do
       threadDelay period
-      (rcode, resp) <- curlGetString host C.curlOpts
+      (rcode, _resp) <- curlGetString host C.curlOpts
       case rcode of
-        CurlOK    -> return ()
-        otherwise -> do
+        CurlOK -> return ()
+        _      -> do
           threadDelay period
           wait' (cnt-1) period host

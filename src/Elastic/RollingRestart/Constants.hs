@@ -31,7 +31,7 @@ import Network.Curl (Long, CurlOption(..))
 
 -- | Poll wait interval (3 seconds).
 pollWaitInterval :: Int
-pollWaitInterval = 3 * 10 ^ 6
+pollWaitInterval = 3 * 1000000  -- 10 ^ 6
 
 -- | How many times to poll before giving up.
 pollWaitCount :: Int

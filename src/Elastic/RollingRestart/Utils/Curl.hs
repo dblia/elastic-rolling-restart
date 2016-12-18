@@ -34,13 +34,17 @@ createRequest method url pfs ctype =
   let content_type = fromMaybe C.curlPostDefaultContentType ctype
   in initialize >>= \ h -> do
     ref <- newIORef []
-    setopt h (CurlCookieJar "cookies")
-    setopt h (CurlFailOnError True)
-    setopt h (CurlURL url)
-    setopt h (CurlCustomRequest method)
-    setopt h (CurlPostFields pfs)
-    setopt h (CurlHttpHeaders ["Content-Type: " ++ content_type])
-    setopt h (CurlWriteFunction (gatherOutput ref))
+    setopt' h (CurlCookieJar "cookies")
+    setopt' h (CurlFailOnError True)
+    setopt' h (CurlURL url)
+    setopt' h (CurlCustomRequest method)
+    setopt' h (CurlPostFields pfs)
+    setopt' h (CurlHttpHeaders ["Content-Type: " ++ content_type])
+    setopt' h (CurlWriteFunction (gatherOutput ref))
     rc <- perform h
     lss <- readIORef ref
     return (rc, concat $ reverse lss)
+ where setopt' :: Curl -> CurlOption -> IO ()
+       setopt' c_obj c_opt = do
+         _ <- setopt c_obj c_opt
+         return ()
