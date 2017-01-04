@@ -40,16 +40,16 @@ import System.Process  (readProcessWithExitCode)
 import Text.Printf     (printf)
 
 
--- | Exit the program in case of an error, or return the result value.
+-- | Helper to exit the program in case of error, or return the result.
 exitIfErr :: (ExitCode, String, String) -> IO String
 exitIfErr (ExitSuccess, stdout, _) = return stdout
 exitIfErr (ExitFailure rcode, _, stderr) =
   fail $ printf "Command failed with exit code %s: %s" (show rcode) stderr
 
 -- | Prepares the given command to be executed by `readProcessWithExitCode`.
--- This function receives the command as a String and an optional host name to
--- execute the command, and returns the command as a tuple of the executable's
--- name and the command's list of arguments.
+-- This function receives the command to be executed as a String and an
+-- optional host name to execute the command. Then, it returns the command
+-- as a tuple of the executable's name and the command's list of arguments.
 prepareCommand :: String -> Maybe String -> (FilePath, [String])
 prepareCommand command hostname =
   let cmd = splitOn " " command
@@ -57,14 +57,14 @@ prepareCommand command hostname =
     Just host -> (C.cmdSSH, C.sshParams ++ [host] ++ cmd)
     Nothing   -> (head cmd, tail cmd)
 
--- | Execute the given shell command.
+-- | Executes the given shell command.
 -- The command can be executed either locally, or on a remote host via SSH.
 runCmd :: String          -- ^ Command to be executed
        -> Maybe String    -- ^ Host to execute the command via SSH (optional)
        -> IO String       -- ^ Output of the command
 runCmd command target = do
   let (cmd, params) = prepareCommand command target
-  putStrLn $ printf "Runnning cmd: %s %s " cmd (unwords params)
+  --putStrLn $ printf "[DEBUG] Runnning cmd: %s %s " cmd (unwords params)
   (E.try $ readProcessWithExitCode cmd params stdin ::
     IO (Either IOError (ExitCode, String, String))) >>= either ioError exitIfErr
   where stdin :: String

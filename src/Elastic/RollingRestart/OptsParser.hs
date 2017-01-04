@@ -37,15 +37,15 @@ import Data.List.Split     (splitOn)
 import Options.Applicative
 
 
--- | Command line arguments.
+-- | Command-line arguments definition.
 data Opts = Opts
-  { optsMaster  :: String
-  , optsNodes   :: String
-  , optsService :: String
+  { optsMaster  :: String   -- ^ the cluster master node
+  , optsNodes   :: String   -- ^ list of cluster nodes to restart
+  , optsService :: String   -- ^ the elasticsearch service name
   } deriving (Eq, Ord, Show)
 
 
--- | Command line argument parser.
+-- | Command-line arguments parser.
 optParser :: Parser Opts
 optParser = helper <*> _parser
   where
@@ -69,13 +69,13 @@ optParser = helper <*> _parser
            <> metavar "SERVICE"
            <> help "The elasticsearch service name.")
 
--- | Parse command-line argument by displaying custom description.
+-- | Parse command-line arguments and add a custom description.
 parseOpts :: IO Opts
 parseOpts = execParser $ info optParser $
      fullDesc
   <> progDesc "ElasticSearch cluster rolling restart tool."
 
--- | Parse command-line argument and return them properly.
+-- | Parse command-line arguments and return them properly.
 argParser :: Opts -> IO (String, [String], String)
 argParser opts =
   case opts of

@@ -1,4 +1,4 @@
-{-| Module containing various utility functions.
+{-| Module containing utility functions regarding to curl.
 
 -}
 
@@ -27,10 +27,10 @@ SOFTWARE.
 -}
 
 module Elastic.RollingRestart.Utils.Curl
-  ( curlPutString        -- :: URLString
-                         -- -> [String] -> Maybe String -> IO (CurlCode, String)
-  , curlPostString       -- :: URLString
-                         -- -> [String] -> Maybe String -> IO (CurlCode, String)
+  ( curlPutString     -- :: URLString
+                      -- -> [String] -> Maybe String -> IO (CurlCode, String)
+  , curlPostString    -- :: URLString
+                      -- -> [String] -> Maybe String -> IO (CurlCode, String)
   ) where
 
 import Elastic.RollingRestart.Constants as C

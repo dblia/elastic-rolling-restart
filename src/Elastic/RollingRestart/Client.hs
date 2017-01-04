@@ -1,4 +1,4 @@
-{-| Module implementing the Elasticsearch related logic.
+{-| Module implementing the core Elasticsearch logic.
 
 -}
 
@@ -67,7 +67,7 @@ waitForStatus host status_list =
             wait' (cnt-1) period url st_list
         _      -> fail $ printf "Curl error for '%s': %s" url (show code)
 
--- | Toggle between shard allocation transient settings.
+-- | Toggle between shard allocation settings.
 shardAllocToggle :: String -> String -> IO String
 shardAllocToggle action host = do
   let es_url = host ++ C.esClusterSettings
@@ -84,7 +84,7 @@ shardAllocToggle action host = do
           "disable" -> [shardAllocSettings "none"]
           _         -> error $ printf "Unknown action argument: %s" action
 
--- | Request a node shutdown.
+-- | Request a node shutdown via the Elasticsearch shutdown API.
 nodeShutdown :: String -> IO String
 nodeShutdown host = do
   let es_url = host ++ C.esNodeShutdown
@@ -93,7 +93,7 @@ nodeShutdown host = do
     CurlOK -> return resp
     _      -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
 
--- | Wait from a node stop responding.
+-- | Wait for a node to stop responding.
 waitForNodeStop :: URLString -> IO ()
 waitForNodeStop = wait' C.pollWaitCount C.pollWaitInterval
   where
@@ -108,7 +108,7 @@ waitForNodeStop = wait' C.pollWaitCount C.pollWaitInterval
           wait' (cnt-1) period host
         _      -> return ()
 
--- | Wait from a node start responding.
+-- | Wait for a node to start responding.
 waitForNodeJoin :: URLString -> IO ()
 waitForNodeJoin = wait' C.pollWaitCount C.pollWaitInterval
   where
