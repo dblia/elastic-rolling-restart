@@ -1,4 +1,4 @@
-{-| Module implementiing the tool's core logic.
+{-| Module implementing the tool's core logic.
 
 -}
 
@@ -28,81 +28,90 @@ SOFTWARE.
 
 module Main where
 
-import Elastic.RollingRestart.Client     as Cli
-import Elastic.RollingRestart.Constants  as C
-import Elastic.RollingRestart.OptsParser    (parseOpts, argParser)
+import Elastic.RollingRestart.Client        as Cli
+import Elastic.RollingRestart.Constants     as C
+import Elastic.RollingRestart.OptsParser       (parseOpts, argParser)
 import Elastic.RollingRestart.Utils.Process
 
 import Data.List.Split  (splitOn)
 import Network.Curl
 import Text.Printf      (printf)
 
--- | Helper function to restart a single node
-restart :: String -> String -> String -> IO ()
-restart master node service = do
 
-  putStrLn $ printf ">>>>>> Restarting node '%s'\n" node
+-- | Helper function to restart a single ElasticSearch process.
+singleNodeRestart :: String -> String -> String -> String -> IO ()
+singleNodeRestart master node service cluster_name = do
+
+  putStrLn $ printf "\nRestarting host `%s`:" node
 
   -- | Verify green cluster status.
-  putStrLn ">>> Verifying green cluster status"
-  body <- Cli.waitForStatus master ["green"]
-  putStrLn body
+  putStrLn " - Verifying `green` cluster status"
+  _ <- Cli.waitForStatus master ["green"]
 
   -- | Disable routing shard allocation.
-  putStrLn ">>> Disabling routing shard allocation"
-  _out <- Cli.shardAllocToggle C.shardAllocDisable master
-  putStrLn $ _out ++ "\n"
+  putStrLn $ printf " - Disabling shard allocation for `%s`" cluster_name
+  _ <- Cli.shardAllocToggle C.shardAllocDisable master
 
-  -- | Request node shutdown for node.
-  putStrLn $ ">>> Requesting node shutdown for " ++ node
-  Cli.nodeShutdown node >>= (\out -> putStrLn $ out ++ "\n")
+  -- | Request ElasticSearch process to shutdown.
+  putStrLn " - Requesting ElasticSearch process to shutdown:"
+  --Cli.nodeShutdown node >>= (\out -> putStrLn $ out ++ "\n")
+  _ <- Cli.nodeShutdown node
 
   -- | Wait for node to stop.
-  putStrLn $ printf ">>> Waiting for node '%s' to stop" node
+  putStrLn "   * Waiting for node to stop ..."
   Cli.waitForNodeStop node
-  putStr "\n"
+  putStrLn "   * Node stopped successfully!"
 
-  -- | Restart the node.
-  putStrLn $ printf ">>> Restarting node '%s'" node
+  -- | Restart the ElasticSearch process.
+  putStrLn " - Re-starting ElasticSearch process:"
   let [hostname, _] = splitOn ":" node
   let cmd = unwords [C.cmdSudo, C.cmdSystemctl, "start", service]
-  runCmd cmd (Just hostname) >>= putStrLn
+  _ <- runCmd cmd (Just hostname)
 
   -- | Wait for node to respond after restart.
-  putStrLn $ printf ">>> Waiting for node '%s' to re-join the cluster" node
+  putStrLn "   * Waiting for node to re-join the cluster ..."
   Cli.waitForNodeJoin node
-  putStr "\n"
+  putStrLn "   * Node re-joined the cluster!"
 
   -- | Verify at least yellow cluster status.
-  putStrLn ">>> Verifying at least yellow cluster status"
-  Cli.waitForStatus master ["yellow", "green"] >>= putStrLn
+  putStrLn " - Verifying `yellow` cluster status, at least"
+  _ <- Cli.waitForStatus master ["yellow", "green"]
 
   -- | Re-enabling routing shard allocation.
-  putStrLn ">>> Re-enabling routing shard allocation"
-  _out <- Cli.shardAllocToggle C.shardAllocEnable master
-  putStrLn $ _out ++ "\n"
+  putStrLn $ printf " - Enabling shard allocation for `%s`" cluster_name
+  _ <- Cli.shardAllocToggle C.shardAllocEnable master
 
   -- | Verify green cluster status.
-  putStrLn ">>> Verifying green cluster status"
-  Cli.waitForStatus master ["green"] >>= putStrLn
+  putStrLn " - Verifying `green` cluster status"
+  _ <- Cli.waitForStatus master ["green"]
 
-  putStrLn $ printf ">>>>>> Node '%s' restarted successfully!\n" node
+  putStrLn $ printf "Host `%s` restarted successfully!" node
 
+
+-- | Implements the core logic for performing a rolling-restart.
 main :: IO ()
 main = withCurlDo $ do
+
   -- | Parse command-line arguments.
   (master, nodes, service) <- parseOpts >>= argParser
-  putStrLn $ "Service: " ++ service
-  putStrLn $ "Master: " ++ master
-  putStr "Nodes: "
-  mapM_ (\str -> putStr $ " " ++ str) nodes
-  putStrLn "\n"
 
-  -- | Rolling restart the cluster nodes.
-  mapM_ (\node -> restart master node service) nodes
+  -- | Retrieve the cluster name.
+  cluster_name <- Cli.getClusterName master
+
+  -- | Output the information about the given cluster.
+  putStrLn $ "Cluster: " ++ cluster_name
+  putStrLn $ "Master:  " ++ master
+  putStr "Nodes:  "
+  mapM_ (\str -> putStr $ " " ++ str) nodes
+  putStr "\n"
+  putStrLn $ "Service: " ++ service
+
+  -- | Rolling restart the given cluster nodes.
+  mapM_ (\node -> singleNodeRestart master node service cluster_name) nodes
 
   -- | Finally, restart the master node.
   let node = master
-  let new_master = head nodes
-  putStrLn $ printf "New master is '%s', last node '%s'" new_master node
-  restart new_master node service
+  let dummy_master = head nodes
+  singleNodeRestart dummy_master node service cluster_name
+
+  putStrLn $ printf "\nRolling restart of cluster `%s` completed!" cluster_name
