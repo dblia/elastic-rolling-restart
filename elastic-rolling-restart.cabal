@@ -51,6 +51,10 @@ description:
   See also,
     https://elastic.co/guide/en/elasticsearch/guide/1.x/_rolling_restarts.html
 
+source-repository head
+  type: git
+  location: https://github.com/dblia/elastic-rolling-restart.git
+
 library
   hs-source-dirs:
     src
