@@ -1,5 +1,5 @@
 --
---Copyright (c) 2016 Dimitrios Bliamplias
+--Copyright (c) 2016, 2017 Dimitrios Bliamplias
 --
 --Permission is hereby granted, free of charge, to any person obtaining a copy
 --of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@ version:            1.0.0
 license:            MIT
 license-file:       license
 extra-source-files: readme.rst changelog.rst
-copyright:          Copyright (c) 2016 Dimitrios Bliamplias
+copyright:          Copyright (c) 2016, 2017 Dimitrios Bliamplias
 author:             Dimitrios Bliamplias <bl.dimitris@gmail.com>
 maintainer:         Dimitrios Bliamplias <bl.dimitris@gmail.com>
 build-type:         Simple
