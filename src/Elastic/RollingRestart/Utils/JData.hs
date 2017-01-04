@@ -31,7 +31,8 @@ SOFTWARE.
 -}
 
 module Elastic.RollingRestart.Utils.JData
-  ( shardAllocSettings        -- :: String -> String
+  ( shardAllocSettings -- :: String -> String
+  , ClusterInfo(..)    -- :: ClusterInfo (Int String String VersionInfo String)
   ) where
 
 import Data.Aeson   ((.=), FromJSON(..), ToJSON(..), object, encode)
@@ -56,6 +57,29 @@ data TransientSettings = TransientSettings
 instance FromJSON TransientSettings
 instance ToJSON TransientSettings
 
+-- | Elasticsearch version info definition.
+data VersionInfo = VersionInfo {
+    number          :: String
+  , build_hash      :: String
+  , build_timestamp :: String
+  , build_snapshot  :: Bool
+  , lucene_version  :: String
+} deriving (Show, Generic)
+
+instance FromJSON VersionInfo
+instance ToJSON VersionInfo
+
+-- | Elasticsearch cluster info definition.
+data ClusterInfo = ClusterInfo {
+    status       :: Int
+  , name         :: String
+  , cluster_name :: String
+  , version      :: VersionInfo
+  , tagline      :: String
+} deriving (Show, Generic)
+
+instance FromJSON ClusterInfo
+instance ToJSON ClusterInfo
 
 -- | Builds a transient settings dictionary for an Elasticsearch cluster.
 shardAllocSettings :: String -> String

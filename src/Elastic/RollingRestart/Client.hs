@@ -32,18 +32,21 @@ module Elastic.RollingRestart.Client
   , nodeShutdown          -- :: String -> IO String
   , waitForNodeStop       -- :: String -> IO ()
   , waitForNodeJoin       -- :: String -> IO ()
+  , getClusterName        -- :: URLString -> IO String
   ) where
 
 import Elastic.RollingRestart.Constants as C
 
-import Elastic.RollingRestart.Utils.JData (shardAllocSettings)
+import Elastic.RollingRestart.Utils.JData (shardAllocSettings, ClusterInfo(..))
 import Elastic.RollingRestart.Utils.Curl  (curlPutString, curlPostString)
 
 import Control.Concurrent (threadDelay)
+import Data.Aeson         (decode)
 import Data.List          (isInfixOf)
 import Network.Curl
 import Text.Printf        (printf)
 
+import qualified Data.ByteString.Lazy.Char8 as BS8
 
 -- | Wait for the desired cluster health status.
 waitForStatus :: String -> [String] -> IO String
@@ -119,3 +122,15 @@ waitForNodeJoin = wait' C.pollWaitCount C.pollWaitInterval
         _      -> do
           threadDelay period
           wait' (cnt-1) period host
+
+-- | Retrieve the Elasticsearch cluster name.
+getClusterName :: URLString -> IO String
+getClusterName es_url = do
+  (rcode, resp) <- curlGetString es_url []
+  case rcode of
+    CurlOK -> do
+      let resp_stripped = unwords $ words resp
+      case (decode $ BS8.pack resp_stripped :: Maybe ClusterInfo) of
+        Just (ClusterInfo _ _ cl_name _ _) -> return cl_name
+        Nothing  -> fail $ printf "Couldn't parse cluster name for '%s'" es_url
+    _      -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
