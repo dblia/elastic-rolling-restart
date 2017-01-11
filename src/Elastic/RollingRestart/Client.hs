@@ -34,6 +34,7 @@ module Elastic.RollingRestart.Client
   , waitForNodeJoin       -- :: String -> IO ()
   , getClusterName        -- :: URLString -> IO String
   , getMasterNodeID       -- :: URLString -> IO String
+  , getNodeHttpAddress    -- :: URLString -> String -> IO String
   , getNodeIDs            -- :: URLString -> IO [String]
   , getNodeIDsByRole      -- :: URLString -> IO [String]
   ) where
@@ -49,7 +50,7 @@ import Control.Concurrent (threadDelay)
 import Data.Aeson         (decode, eitherDecode)
 import Data.List          (delete, isInfixOf)
 import Data.List.Split    (splitOn)
-import Data.Map           (foldWithKey)
+import Data.Map           (elems, foldWithKey, Map)
 import Network.Curl
 import Text.Printf        (printf)
 
@@ -174,7 +175,20 @@ getNodeIDsByRole host = do
   master_id <- getMasterNodeID host
   return $ delete master_id node_ids ++ [master_id]
 
---getHttpAddress :: URLString -> IO [String]
--- n_ids <- getNodeIDs host
--- curlGetString host ++ "_nodes/" ++ id ++ "/nodes/"
---
+-- | Retrieve the http_address field of the given node ID.
+getNodeHttpAddress :: URLString -> String -> IO String
+getNodeHttpAddress host node_id = do
+  let es_url = host ++ C.esNodeInfo node_id
+  (rcode, resp) <- curlGetString es_url []
+  case rcode of
+    CurlOK -> do
+      let resp_strip = unwords $ words resp
+      case (eitherDecode $ BS8.pack resp_strip :: Either String NodesAll) of
+        Right (NodesAll _ (NodeList n_info)) -> return $ getHttpAddress n_info
+        Left  err -> fail err
+    _      -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
+  where
+    getHttpAddress :: Map String NodeInfo -> String
+    getHttpAddress node_info =
+      case head $ elems node_info of
+        NodeInfo _ _ _ _ _ _ http_addr -> http_addr

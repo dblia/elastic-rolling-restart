@@ -32,6 +32,7 @@ SOFTWARE.
 
 module Elastic.RollingRestart.Utils.JData.NodesInfo
   ( NodesAll(..)       -- :: NodesAll (String, NodeList)
+  , NodeInfo(..)       -- :: NodeInfo (String String String String String String String)
   , NodeList(..)       -- :: NodeList (Map String NodeInfo)
   ) where
 
@@ -50,7 +51,7 @@ data NodeInfo = NodeInfo {
   , version           :: String
   , build             :: String
   , http_address      :: String
-} deriving (Show, Generic)
+} deriving (Eq, Show, Generic)
 
 instance FromJSON NodeInfo
 instance ToJSON NodeInfo
