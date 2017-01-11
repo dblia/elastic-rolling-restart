@@ -33,14 +33,13 @@ module Elastic.RollingRestart.OptsParser
   , argParser       -- :: Opts -> IO (String, [String])
   ) where
 
-import Data.List.Split     (splitOn)
 import Options.Applicative
 
 
 -- | Command-line arguments definition.
 data Opts = Opts
-  { optsMaster  :: String   -- ^ the cluster master node
-  , optsNodes   :: String   -- ^ list of cluster nodes to restart
+  { optsHost :: String      -- ^ the elasticsearch hostname
+  , optsPort :: String      -- ^ port of the elasticsearch host
   , optsService :: String   -- ^ the elasticsearch service name
   } deriving (Eq, Ord, Show)
 
@@ -52,22 +51,22 @@ optParser = helper <*> _parser
     _parser :: Parser Opts
     _parser = Opts
       <$> strOption
-          ( long "master"
-           <> short 'm'
-           <> metavar "MASTER"
-           <> help "The cluster master node; used to coordinate the rolling\
-                   \ restart operation.")
+          ( long "host"
+           <> short 'H'
+           <> metavar "HOSTNAME"
+           <> help "Hostname or IP of an elasticsearch node")
       <*> strOption
-            ( long "nodes"
-           <> short 'n'
-           <> metavar "NODES"
-           <> help "The cluster node hostnames to restart; nodes should be\
-                   \ concatenated with commas: host1:port[,host2:port].")
+            ( long "port"
+           <> value "9200"
+           <> short 'p'
+           <> metavar "PORT"
+           <> help "Port of the elasticsearch host (default: 9200)")
       <*> strOption
             ( long "service"
+           <> value "elasticsearch.service"
            <> short 's'
-           <> metavar "SERVICE"
-           <> help "The elasticsearch service name.")
+           <> metavar "SVC"
+           <> help "The ES service name (default: elasticsearch.service)")
 
 -- | Parse command-line arguments and add a custom description.
 parseOpts :: IO Opts
@@ -76,10 +75,10 @@ parseOpts = execParser $ info optParser $
   <> progDesc "ElasticSearch cluster rolling restart tool."
 
 -- | Parse command-line arguments and return them properly.
-argParser :: Opts -> IO (String, [String], String)
+argParser :: Opts -> IO (String, String)
 argParser opts =
   case opts of
-    Opts { optsMaster  = master
-         , optsNodes   = nodes
+    Opts { optsHost = host
+         , optsPort = port
          , optsService = service
-         } -> return (master, splitOn "," nodes, service)
+         } -> return (host ++ ":" ++  port, service)

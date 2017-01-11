@@ -93,10 +93,16 @@ main :: IO ()
 main = withCurlDo $ do
 
   -- | Parse command-line arguments.
-  (master, nodes, service) <- parseOpts >>= argParser
+  (hostname, service) <- parseOpts >>= argParser
 
   -- | Retrieve the cluster name.
-  cluster_name <- Cli.getClusterName master
+  cluster_name <- Cli.getClusterName hostname
+  -- | Retrieve the cluster node URLs.
+  node_urls <- Cli.getNodeURLs hostname
+  -- | Retrieve the cluster master node.
+  let master = last node_urls
+  -- | Get all cluster nodes except the master node.
+  let nodes = init node_urls
 
   -- | Output the information about the given cluster.
   putStrLn $ "Cluster: " ++ cluster_name
@@ -110,8 +116,7 @@ main = withCurlDo $ do
   mapM_ (\node -> singleNodeRestart master node service cluster_name) nodes
 
   -- | Finally, restart the master node.
-  let node = master
-  let dummy_master = head nodes
-  singleNodeRestart dummy_master node service cluster_name
+  let node = head nodes
+  singleNodeRestart node master service cluster_name
 
   putStrLn $ printf "\nRolling restart of cluster `%s` completed!" cluster_name

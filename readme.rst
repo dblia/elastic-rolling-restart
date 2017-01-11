@@ -73,17 +73,15 @@ To see details about the tool usage, run ``rolling-restart -h/--help``
 
   $ rolling-restart --help
 
-  Usage: rolling-restart (-m|--master MASTER) (-n|--nodes NODES)
-                         (-s|--service SERVICE)
+  Usage: rolling-restart (-H|--host HOSTNAME) [-p|--port PORT] [-s|--service SVC]
+
     ElasticSearch cluster rolling restart tool.
 
   Available options:
     -h,--help             Show this help text
-    -m,--master MASTER    The cluster master node; used to coordinate the
-                          rolling restart operation.
-    -n,--nodes NODES      The cluster node hostnames to restart; nodes should
-                          be concatenated with commas: host1:port[,host2:port].
-    -s,--service SERVICE  The elasticsearch service name.
+    -H,--host HOSTNAME    The hostname or IP of an Elasticsearch node
+    -p,--port PORT        The port of the Elasticsearch host (default: 9200)
+    -s,--service SVC      The ES service name (default: elasticsearch.service)
 
 Usage
 -----
@@ -92,15 +90,16 @@ Usage
 
 ::
 
-  $ rolling-restart --master es_node1.example.com:9200 \
-        --nodes es_node2.example.com:9200,es_node3.example.com:9200 \
+  $ rolling-restart --host es_node1.example.com:9200 --port 9200 \
         --service elasticsearch.service
 
   or simply,
 
-  $ rolling-restart -m es_node1.example.com:9200 \
-        -n es_node2.example.com:9200,es_node3.example.com:9200 \
-        -s elasticsearch.service
+  $ rolling-restart -H es_node1.example.com -p 9200 -s elasticsearch.service
+
+  or even simpler,
+
+  $ rolling-restart -H es_node1.example.com
 
 Caveats
 =======
