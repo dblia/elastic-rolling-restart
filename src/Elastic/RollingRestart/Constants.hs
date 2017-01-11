@@ -43,6 +43,7 @@ module Elastic.RollingRestart.Constants
   , esCatMaster                   -- :: String
   , esClusterSettings             -- :: String
   , esNodeShutdown                -- :: String
+  , esNodes                       -- :: String
 
   , sshParams                     -- :: [String]
 
@@ -108,6 +109,10 @@ esClusterSettings = "/_cluster/settings"
 -- | Elasticsearch API node-shutdow endpoint.
 esNodeShutdown :: String
 esNodeShutdown = "/_cluster/nodes/_local/_shutdown"
+
+-- | Elasticsearch nodes API endpoint.
+esNodes :: String
+esNodes = "/_nodes/_all/nodes"
 
 -- | Parameters for SSH remote command execution.
 sshParams :: [String]

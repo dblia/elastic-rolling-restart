@@ -32,6 +32,7 @@ SOFTWARE.
 
 module Elastic.RollingRestart.Utils.JData.NodesInfo
   ( NodesAll(..)       -- :: NodesAll (String, NodeList)
+  , NodeList(..)       -- :: NodeList (Map String NodeInfo)
   ) where
 
 import Data.Aeson   (FromJSON(..), ToJSON(..))

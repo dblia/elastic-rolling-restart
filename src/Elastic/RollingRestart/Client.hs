@@ -34,18 +34,21 @@ module Elastic.RollingRestart.Client
   , waitForNodeJoin       -- :: String -> IO ()
   , getClusterName        -- :: URLString -> IO String
   , getMasterNodeID       -- :: URLString -> IO String
+  , getNodeIDs            -- :: URLString -> IO [String]
   ) where
 
 import Elastic.RollingRestart.Constants as C
 
 import Elastic.RollingRestart.Utils.Curl  (curlPutString, curlPostString)
 import Elastic.RollingRestart.Utils.JData.ClusterInfo
+import Elastic.RollingRestart.Utils.JData.NodesInfo
 import Elastic.RollingRestart.Utils.JData.ShardAlloc
 
 import Control.Concurrent (threadDelay)
-import Data.Aeson         (decode)
+import Data.Aeson         (decode, eitherDecode)
 import Data.List          (isInfixOf)
 import Data.List.Split    (splitOn)
+import Data.Map           (foldWithKey)
 import Network.Curl
 import Text.Printf        (printf)
 
@@ -145,4 +148,18 @@ getMasterNodeID host = do
   (rcode, resp) <- curlGetString es_url []
   case rcode of
     CurlOK -> return $ head $ splitOn " " resp
+    _      -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
+
+-- | Retrieve the Elasticsearch cluster node IDs.
+getNodeIDs :: URLString -> IO [String]
+getNodeIDs host = do
+  let es_url = host ++ C.esNodes
+  (rcode, resp) <- curlGetString es_url []
+  case rcode of
+    CurlOK -> do
+      let resp_strip = unwords $ words resp
+      case (eitherDecode $ BS8.pack resp_strip :: Either String NodesAll) of
+        Right (NodesAll _ (NodeList nodes_info)) ->
+          return $ foldWithKey (\key _val ks -> key:ks) [] nodes_info
+        Left  err -> fail err
     _      -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
