@@ -58,8 +58,8 @@ import qualified Data.ByteString.Lazy.Char8 as BS8
 
 -- | Wait for the desired cluster health status.
 waitForStatus :: String -> [String] -> IO String
-waitForStatus host status_list =
-  let es_url = host ++ C.esCatHealth
+waitForStatus hname status_list =
+  let es_url = hname ++ C.esCatHealth
   in wait' C.pollWaitCount C.pollWaitInterval es_url status_list
   where
     wait' :: Int -> Int -> URLString -> [String] -> IO String
@@ -77,14 +77,14 @@ waitForStatus host status_list =
 
 -- | Toggle between shard allocation settings.
 shardAllocToggle :: String -> String -> IO String
-shardAllocToggle action host = do
-  let es_url = host ++ C.esClusterSettings
+shardAllocToggle action hname = do
+  let es_url = hname ++ C.esClusterSettings
   (rcode, resp) <- curlPutString es_url req_body C.curlContentTypeJson
   case rcode of
     CurlOK ->
       if "\"acknowledged\":true" `isInfixOf` resp
       then return "Done"
-      else fail $ printf "Failed allocation %s acknowledge for %s" action host
+      else fail $ printf "Failed allocation %s acknowledge for %s" action hname
     _      -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
   where req_body :: [String]
         req_body = case action of
@@ -94,8 +94,8 @@ shardAllocToggle action host = do
 
 -- | Request a node shutdown via the Elasticsearch shutdown API.
 nodeShutdown :: String -> IO String
-nodeShutdown host = do
-  let es_url = host ++ C.esNodeShutdown
+nodeShutdown hname = do
+  let es_url = hname ++ C.esNodeShutdown
   (rcode, resp) <- curlPostString es_url [] Nothing
   case rcode of
     CurlOK -> return resp
@@ -106,14 +106,14 @@ waitForNodeStop :: URLString -> IO ()
 waitForNodeStop = wait' C.pollWaitCount C.pollWaitInterval
   where
     wait' :: Int -> Int -> URLString -> IO ()
-    wait' 0 _ host = fail $ "Sorry mate, no more retries left: " ++ host
-    wait' cnt period host = do
+    wait' 0 _ hname = fail $ "Sorry mate, no more retries left: " ++ hname
+    wait' cnt period hname = do
       threadDelay period
-      (rcode, _resp) <- curlGetString host C.curlOpts
+      (rcode, _resp) <- curlGetString hname C.curlOpts
       case rcode of
         CurlOK -> do
           threadDelay period
-          wait' (cnt-1) period host
+          wait' (cnt-1) period hname
         _      -> return ()
 
 -- | Wait for a node to start responding.
@@ -121,15 +121,15 @@ waitForNodeJoin :: URLString -> IO ()
 waitForNodeJoin = wait' C.pollWaitCount C.pollWaitInterval
   where
     wait' :: Int -> Int -> URLString -> IO ()
-    wait' 0 _ host = fail $ "Sorry mate, no more retries left: " ++ host
-    wait' cnt period host = do
+    wait' 0 _ hname = fail $ "Sorry mate, no more retries left: " ++ hname
+    wait' cnt period hname = do
       threadDelay period
-      (rcode, _resp) <- curlGetString host C.curlOpts
+      (rcode, _resp) <- curlGetString hname C.curlOpts
       case rcode of
         CurlOK -> return ()
         _      -> do
           threadDelay period
-          wait' (cnt-1) period host
+          wait' (cnt-1) period hname
 
 -- | Retrieve the Elasticsearch cluster name.
 getClusterName :: URLString -> IO String
@@ -145,8 +145,8 @@ getClusterName es_url = do
 
 -- | Retrieve the Elasticsearch cluster master node ID.
 getMasterNodeID :: URLString -> IO String
-getMasterNodeID host = do
-  let es_url = host ++ C.esCatMaster
+getMasterNodeID hname = do
+  let es_url = hname ++ C.esCatMaster
   (rcode, resp) <- curlGetString es_url []
   case rcode of
     CurlOK -> return $ head $ splitOn " " resp
@@ -154,8 +154,8 @@ getMasterNodeID host = do
 
 -- | Retrieve the Elasticsearch cluster node IDs.
 getNodeIDs :: URLString -> IO [String]
-getNodeIDs host = do
-  let es_url = host ++ C.esNodes
+getNodeIDs hname = do
+  let es_url = hname ++ C.esNodes
   (rcode, resp) <- curlGetString es_url []
   case rcode of
     CurlOK -> do
@@ -170,15 +170,15 @@ getNodeIDs host = do
 -- This function returns the list with the Elasticsearch node IDs, with
 -- the master node ID always be the last element of the list.
 getNodeIDsByRole :: URLString -> IO [String]
-getNodeIDsByRole host = do
-  node_ids <- getNodeIDs host
-  master_id <- getMasterNodeID host
+getNodeIDsByRole hname = do
+  node_ids <- getNodeIDs hname
+  master_id <- getMasterNodeID hname
   return $ delete master_id node_ids ++ [master_id]
 
 -- | Retrieve the http_address field of the given node ID.
 getNodeHttpAddress :: URLString -> String -> IO String
-getNodeHttpAddress host node_id = do
-  let es_url = host ++ C.esNodeInfo node_id
+getNodeHttpAddress hname node_id = do
+  let es_url = hname ++ C.esNodeInfo node_id
   (rcode, resp) <- curlGetString es_url []
   case rcode of
     CurlOK -> do
