@@ -21,7 +21,7 @@
 --
 
 name:               elastic-rolling-restart
-version:            1.0.0
+version:            0.1.0.0
 license:            MIT
 license-file:       license
 extra-source-files: readme.rst changelog.rst
