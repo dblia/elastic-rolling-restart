@@ -40,6 +40,7 @@ module Elastic.RollingRestart.Constants
   , shardAllocDisable             -- :: String
 
   , esCatHealth                   -- :: String
+  , esCatMaster                   -- :: String
   , esClusterSettings             -- :: String
   , esNodeShutdown                -- :: String
 
@@ -95,6 +96,10 @@ shardAllocDisable = "disable"
 -- | Elasticsearch API cat-health endpoint.
 esCatHealth :: String
 esCatHealth = "/_cat/health"
+
+-- | Elasticsearch API cat-master endpoint.
+esCatMaster :: String
+esCatMaster = "/_cat/master"
 
 -- | Elasticsearch API cluster-settings endpoint.
 esClusterSettings :: String

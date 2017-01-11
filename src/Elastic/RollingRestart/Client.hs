@@ -33,6 +33,7 @@ module Elastic.RollingRestart.Client
   , waitForNodeStop       -- :: String -> IO ()
   , waitForNodeJoin       -- :: String -> IO ()
   , getClusterName        -- :: URLString -> IO String
+  , getMasterNodeID       -- :: URLString -> IO String
   ) where
 
 import Elastic.RollingRestart.Constants as C
@@ -44,6 +45,7 @@ import Elastic.RollingRestart.Utils.JData.ShardAlloc
 import Control.Concurrent (threadDelay)
 import Data.Aeson         (decode)
 import Data.List          (isInfixOf)
+import Data.List.Split    (splitOn)
 import Network.Curl
 import Text.Printf        (printf)
 
@@ -134,4 +136,13 @@ getClusterName es_url = do
       case (decode $ BS8.pack resp_stripped :: Maybe ClusterInfo) of
         Just (ClusterInfo _ _ cl_name _ _) -> return cl_name
         Nothing  -> fail $ printf "Couldn't parse cluster name for '%s'" es_url
+    _      -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
+
+-- | Retrieve the Elasticsearch cluster master node ID.
+getMasterNodeID :: URLString -> IO String
+getMasterNodeID host = do
+  let es_url = host ++ C.esCatMaster
+  (rcode, resp) <- curlGetString es_url []
+  case rcode of
+    CurlOK -> return $ head $ splitOn " " resp
     _      -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
