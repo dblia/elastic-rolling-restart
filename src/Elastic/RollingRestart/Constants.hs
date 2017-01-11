@@ -40,8 +40,11 @@ module Elastic.RollingRestart.Constants
   , shardAllocDisable             -- :: String
 
   , esCatHealth                   -- :: String
+  , esCatMaster                   -- :: String
   , esClusterSettings             -- :: String
   , esNodeShutdown                -- :: String
+  , esNodes                       -- :: String
+  , esNodeInfo                    -- :: String -> String
 
   , sshParams                     -- :: [String]
 
@@ -96,6 +99,10 @@ shardAllocDisable = "disable"
 esCatHealth :: String
 esCatHealth = "/_cat/health"
 
+-- | Elasticsearch API cat-master endpoint.
+esCatMaster :: String
+esCatMaster = "/_cat/master"
+
 -- | Elasticsearch API cluster-settings endpoint.
 esClusterSettings :: String
 esClusterSettings = "/_cluster/settings"
@@ -103,6 +110,14 @@ esClusterSettings = "/_cluster/settings"
 -- | Elasticsearch API node-shutdow endpoint.
 esNodeShutdown :: String
 esNodeShutdown = "/_cluster/nodes/_local/_shutdown"
+
+-- | Elasticsearch nodes API endpoint.
+esNodes :: String
+esNodes = "/_nodes/_all/nodes"
+
+-- | Elasticsearch node info API endpoint.
+esNodeInfo :: String -> String
+esNodeInfo node_id = "/_nodes/" ++ node_id ++ "/info"
 
 -- | Parameters for SSH remote command execution.
 sshParams :: [String]
