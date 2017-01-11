@@ -37,6 +37,7 @@ module Elastic.RollingRestart.Client
   , getNodeHttpAddress    -- :: URLString -> String -> IO String
   , getNodeIDs            -- :: URLString -> IO [String]
   , getNodeIDsByRole      -- :: URLString -> IO [String]
+  , getNodeURLs           -- :: URLString -> IO [String]
   ) where
 
 import Elastic.RollingRestart.Constants as C
@@ -51,6 +52,7 @@ import Data.Aeson         (decode, eitherDecode)
 import Data.List          (delete, isInfixOf)
 import Data.List.Split    (splitOn)
 import Data.Map           (elems, foldWithKey, Map)
+import Data.String.Utils  (replace)
 import Network.Curl
 import Text.Printf        (printf)
 
@@ -192,3 +194,11 @@ getNodeHttpAddress hname node_id = do
     getHttpAddress node_info =
       case head $ elems node_info of
         NodeInfo _ _ _ _ _ _ http_addr -> http_addr
+
+-- | Retrieve the Elasticsearch nodes URLs.
+getNodeURLs :: URLString -> IO [String]
+getNodeURLs hname = do
+  node_ids <- getNodeIDsByRole hname
+  http_addresses <- mapM (getNodeHttpAddress hname) node_ids
+  -- TODO: The http_address field should be better parsed with a regex
+  return $ map (replace "]" "" . replace "inet[/" "") http_addresses
