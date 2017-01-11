@@ -63,7 +63,8 @@ library
     Elastic.RollingRestart.Constants
     Elastic.RollingRestart.OptsParser
     Elastic.RollingRestart.Utils.Curl
-    Elastic.RollingRestart.Utils.JData
+    Elastic.RollingRestart.Utils.JData.ClusterInfo
+    Elastic.RollingRestart.Utils.JData.ShardAlloc
     Elastic.RollingRestart.Utils.Process
   default-language:
     Haskell2010

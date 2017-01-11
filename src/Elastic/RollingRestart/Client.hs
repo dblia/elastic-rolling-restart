@@ -37,8 +37,9 @@ module Elastic.RollingRestart.Client
 
 import Elastic.RollingRestart.Constants as C
 
-import Elastic.RollingRestart.Utils.JData (shardAllocSettings, ClusterInfo(..))
 import Elastic.RollingRestart.Utils.Curl  (curlPutString, curlPostString)
+import Elastic.RollingRestart.Utils.JData.ClusterInfo
+import Elastic.RollingRestart.Utils.JData.ShardAlloc
 
 import Control.Concurrent (threadDelay)
 import Data.Aeson         (decode)
