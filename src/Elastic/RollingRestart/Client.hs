@@ -35,6 +35,7 @@ module Elastic.RollingRestart.Client
   , getClusterName        -- :: URLString -> IO String
   , getMasterNodeID       -- :: URLString -> IO String
   , getNodeIDs            -- :: URLString -> IO [String]
+  , getNodeIDsByRole      -- :: URLString -> IO [String]
   ) where
 
 import Elastic.RollingRestart.Constants as C
@@ -46,7 +47,7 @@ import Elastic.RollingRestart.Utils.JData.ShardAlloc
 
 import Control.Concurrent (threadDelay)
 import Data.Aeson         (decode, eitherDecode)
-import Data.List          (isInfixOf)
+import Data.List          (delete, isInfixOf)
 import Data.List.Split    (splitOn)
 import Data.Map           (foldWithKey)
 import Network.Curl
@@ -163,3 +164,17 @@ getNodeIDs host = do
           return $ foldWithKey (\key _val ks -> key:ks) [] nodes_info
         Left  err -> fail err
     _      -> fail $ printf "Curl error for '%s': %s" es_url (show rcode)
+
+-- | Retrieve the Elasticsearch cluster node IDs sorted by their role.
+-- This function returns the list with the Elasticsearch node IDs, with
+-- the master node ID always be the last element of the list.
+getNodeIDsByRole :: URLString -> IO [String]
+getNodeIDsByRole host = do
+  node_ids <- getNodeIDs host
+  master_id <- getMasterNodeID host
+  return $ delete master_id node_ids ++ [master_id]
+
+--getHttpAddress :: URLString -> IO [String]
+-- n_ids <- getNodeIDs host
+-- curlGetString host ++ "_nodes/" ++ id ++ "/nodes/"
+--
