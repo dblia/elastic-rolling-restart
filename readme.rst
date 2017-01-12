@@ -109,8 +109,6 @@ Caveats
 - In case the tool fails or is interrupted while it is running, shard
   allocation may be remain disabled. In that case you should re-enable it
   manually.
-- You shouldn't include the master node into the list of nodes, otherwise that
-  node will be restarted twice.
 - The Elasticsearch service name *must* be identical to all given nodes.
 
 .. vim: set textwidth=79 :
