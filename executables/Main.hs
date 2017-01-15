@@ -31,6 +31,7 @@ module Main where
 import Elastic.RollingRestart.Client        as Cli
 import Elastic.RollingRestart.Constants     as C
 import Elastic.RollingRestart.OptsParser       (parseOpts, argParser)
+import Elastic.RollingRestart.Utils
 import Elastic.RollingRestart.Utils.Process
 
 import Data.List.Split  (splitOn)
@@ -39,10 +40,17 @@ import Text.Printf      (printf)
 
 
 -- | Helper function to restart a single ElasticSearch process.
-singleNodeRestart :: String -> String -> String -> String -> IO ()
+singleNodeRestart :: String             -- ^ master node url
+                  -> (String, String)   -- ^ restarted node (url, fqdn) tuple
+                  -> String             -- ^ Elasticsearch service name
+                  -> String             -- ^ Elasticsearch cluster name
+                  -> IO ()
 singleNodeRestart master node service cluster_name = do
 
-  putStrLn $ printf "\nRestarting host `%s`:" node
+  let node_url = fst node
+  let node_fqdn = snd node
+
+  putStrLn $ printf "\nRestarting host `%s`:" node_fqdn
 
   -- | Verify green cluster status.
   putStrLn " - Verifying `green` cluster status"
@@ -55,22 +63,22 @@ singleNodeRestart master node service cluster_name = do
   -- | Request ElasticSearch process to shutdown.
   putStrLn " - Requesting ElasticSearch process to shutdown:"
   --Cli.nodeShutdown node >>= (\out -> putStrLn $ out ++ "\n")
-  _ <- Cli.nodeShutdown node
+  _ <- Cli.nodeShutdown node_url
 
   -- | Wait for node to stop.
   putStrLn "   * Waiting for node to stop ..."
-  Cli.waitForNodeStop node
+  Cli.waitForNodeStop node_url
   putStrLn "   * Node stopped successfully!"
 
   -- | Restart the ElasticSearch process.
   putStrLn " - Re-starting ElasticSearch process:"
-  let [hostname, _] = splitOn ":" node
+  let [hostname, _] = splitOn ":" node_url
   let cmd = unwords [C.cmdSudo, C.cmdSystemctl, "start", service]
   _ <- runCmd cmd (Just hostname)
 
   -- | Wait for node to respond after restart.
   putStrLn "   * Waiting for node to re-join the cluster ..."
-  Cli.waitForNodeJoin node
+  Cli.waitForNodeJoin node_url
   putStrLn "   * Node re-joined the cluster!"
 
   -- | Verify at least yellow cluster status.
@@ -85,7 +93,7 @@ singleNodeRestart master node service cluster_name = do
   putStrLn " - Verifying `green` cluster status"
   _ <- Cli.waitForStatus master ["green"]
 
-  putStrLn $ printf "Host `%s` restarted successfully!" node
+  putStrLn $ printf "Host `%s` restarted successfully!" node_fqdn
 
 
 -- | Implements the core logic for performing a rolling-restart.
@@ -99,24 +107,30 @@ main = withCurlDo $ do
   cluster_name <- Cli.getClusterName hostname
   -- | Retrieve the cluster node URLs.
   node_urls <- Cli.getNodeURLs hostname
+  -- | Retrieve the cluster node FQDNs.
+  node_fqdns <- mapM (getHostByIP . takeWhile (/= ':')) node_urls
+  -- | Concatenate node urls and their FQDNs
+  let node_addrs = zip node_urls node_fqdns
+
   -- | Retrieve the cluster master node.
-  let master = last node_urls
+  let master = last node_addrs
   -- | Get all cluster nodes except the master node.
-  let nodes = init node_urls
+  let nodes = init node_addrs
 
   -- | Output the information about the given cluster.
   putStrLn $ "Cluster: " ++ cluster_name
-  putStrLn $ "Master:  " ++ master
+  putStrLn $ "Master:  " ++ snd master
   putStr "Nodes:  "
-  mapM_ (\str -> putStr $ " " ++ str) nodes
+  mapM_ (\tup -> putStr $ " " ++ snd tup) nodes
   putStr "\n"
   putStrLn $ "Service: " ++ service
 
   -- | Rolling restart the given cluster nodes.
-  mapM_ (\node -> singleNodeRestart master node service cluster_name) nodes
+  mapM_ (\n_tupl ->
+    singleNodeRestart (fst master) n_tupl service cluster_name) nodes
 
   -- | Finally, restart the master node.
   let node = head nodes
-  singleNodeRestart node master service cluster_name
+  singleNodeRestart (fst node) master service cluster_name
 
   putStrLn $ printf "\nRolling restart of cluster `%s` completed!" cluster_name
