@@ -6,7 +6,7 @@
 
 
   **NOTE:** You should read the Caveats_ section first, before proceeding with
-  the rest document
+  the rest of the document
 
 .. contents:: **Contents Table**
     :depth: 3
